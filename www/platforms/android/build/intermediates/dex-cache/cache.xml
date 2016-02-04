@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="E:\BA-Thesis\mobile_viewer\betaville-mobile\www\platforms\android\build\intermediates\exploded-aar\android\CordovaLib\unspecified\debug\classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="bea60d73bbcbc614021b52e379e17a27ae4a1df8">
+        <dex dex="E:\BA-Thesis\mobile_viewer\betaville-mobile\www\platforms\android\build\intermediates\pre-dexed\debug\classes-3e0b5477d0e7ef1e2ea2baad26652b513338bf99.jar" />
+    </item>
+
+</items>

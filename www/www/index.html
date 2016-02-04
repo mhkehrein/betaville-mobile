@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>Page Title</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="UTF-8">
+
+        <!-- CSP declaration (from https://github.com/apache/cordova-plugin-whitelist; Feb 3rd 2016):
+            * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+            * Disables use of eval() and inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+                * Enable inline JS: add 'unsafe-inline' to default-src
+                * Enable eval(): add 'unsafe-eval' to default-src
+        -->
+        <meta http-equiv="Content-Security-Policy"
+              content="default-src *.hs-bremen.de 'self' data: gap:;
+              style-src 'self' 'unsafe-inline';
+              media-src *;
+              connect-src http://betaville.hs-bremen.de:8080/betaville-server/
+              http://195.37.176.183:8080/betaville-server/">
+
+        <link rel="stylesheet" href="lib/jquery.mobile-1.4.5.min.css" />
+        <link rel="stylesheet" href="css/viewer.css" />
+
+        <script src="lib/jquery-2.2.0.min.js"></script>
+        <script src="js/viewer.js"></script>
+        <script src="lib/jquery.mobile-1.4.5.min.js"></script>
+
+        <script src="lib/zipjs/zip.js"></script>
+
+        <!-- Revision r73 -->
+        <script src="lib/threejs/three.min.js"></script>
+        <script src="lib/threejs/MTLLoader.js"></script>
+        <script src="lib/threejs/OBJLoader.js"></script>
+        <script src="lib/threejs/OBJMTLLoader.js"></script>
+
+    </head>
+
+    <body>
+        <div data-role="page" id="page">
+            <div id="foo">
+                <h1>'ello!</h1>
+                <p>Press button to download project data:</p>
+                <input id="button" type="submit" value="button" name="download_button">
+            </div>
+        </div>
+        <script src="cordova.js"></script>
+    </body>
+
+</html>

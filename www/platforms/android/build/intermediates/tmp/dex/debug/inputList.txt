@@ -1,0 +1,2 @@
+E:\BA-Thesis\mobile_viewer\betaville-mobile\www\platforms\android\build\intermediates\classes\debug
+E:\BA-Thesis\mobile_viewer\betaville-mobile\www\platforms\android\build\intermediates\pre-dexed\debug\classes-3e0b5477d0e7ef1e2ea2baad26652b513338bf99.jar

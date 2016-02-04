@@ -1,0 +1,39 @@
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {}
+    },
+    "installed_plugins": {
+        "cordova-plugin-camera": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-console": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-device": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-device-orientation": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-file": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-file-transfer": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-geolocation": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-network-information": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        }
+    },
+    "dependent_plugins": {}
+}
