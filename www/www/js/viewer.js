@@ -1,4 +1,4 @@
-/* global zip */
+/* global zip, cordova */
 
 var deviceReadyDeferred = $.Deferred();
 var jqmReadyDeferred = $.Deferred();
@@ -39,9 +39,9 @@ var FinalConstants = (function () {
 var ViewerData = (function () {
     'use strict';
     var
-            modelsInProposal = null,
-            projects,
-            proposalId;
+        modelsInProposal = null,
+        projects,
+        proposalId;
 
     // Public methods
     return {
@@ -111,7 +111,7 @@ var Loader = (function () {
     // Private methods
 
     function loadAllProjects() {
-        // TODO: Remove/alter filter!
+        // TODO: Remove/use filter!
         var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL; // + 'filter';
 //        url = url + '?radius=10000' + '&location=bremen';// + '&lat=53.05515377612419' + '&lng=8.784655519638022';
         Utils.getRequest(url, '', function (response) {
@@ -122,78 +122,144 @@ var Loader = (function () {
         return projectsLoadedDeferred;
     }
 
-    function extractProjectId() {
-//        var href = jQuery(FinalConstants.JQ_SELECTOR_TO_PROJECT_ID)
-//                .attr('href');
-//        var id = href.substr(href.indexOf(FinalConstants.SEARCH_KEY_PROJECT_ID) +
-//                FinalConstants.SEARCH_KEY_PROJECT_ID.length, FinalConstants.PROJECT_ID_LENGTH);
-//        return id;
+    function loadProposals() {
+        var
+            projects = ViewerData.getProjects(),
+            urls = [],
+            fileNames = [];
+
+        // TODO: Iterate through every possible proposal -
+        // Since the proposals can be recursively nested (see API or JSON),
+        // we may not catch every possible proposal with this.
+        /*
+         * Iterate through the projects object, searching for the URLs
+         * to the files associated with the various projects
+         */
+        $.each(projects, function (index, project) {
+            var proposals = project.proposals;
+
+            $.each(proposals, function (index, proposal) {
+                var propHead = proposal.headVersion;
+
+                if (propHead && propHead.models) {
+                    var models = propHead.models;
+
+                    $.each(models, function (index, model) {
+                        var
+                            modelId = model.id,
+                            url = FinalConstants.BETAVILLE_BASE_URL + model.filepath;
+
+                        // Since models may use the same file, we can check for duplicates
+                        if (urls.indexOf(url) === -1) {
+                            urls.push(url);
+                            fileNames.push(model.packageFilename);
+                        }
+                    });
+                }
+            });
+        });
+        initModelFilesTransfer(urls, fileNames);
     }
 
-    function loadProposals(projectId) {
-        // TODO: this shouldn't be called with an id.
-        if (projectId !== undefined) {
-            var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL + projectId + '/proposals';
+    function initModelFilesTransfer(urls, fileNames) {
+        console.log('Downloading model files…');
 
-            Utils.getRequest(url, '', function (response) {
-                var proposalId = getProposalId();
-                var proposalsJson = $.parseJSON(response);
+        var fileSystemErrorHandler = function (fileName, error) {
+            var msg = '';
 
-                $.each(proposalsJson, function (index, proposal) {
-                    if (proposal.id === proposalId) {
-                        ViewerData.setModels(proposal.headVersion.models);
-                        ViewerData.setProposalId(proposalId);
-                        initModelFilesTransfer();
-                        return false;
-                    }
+            switch (error.code) {
+                case FileError.QUOTA_EXCEEDED_ERR:
+                    msg = 'Storage quota exceeded';
+                    break;
+                case FileError.NOT_FOUND_ERR:
+                    msg = 'File not found';
+                    break;
+                case FileError.SECURITY_ERR:
+                    msg = 'Security error';
+                    break;
+                case FileError.INVALID_MODIFICATION_ERR:
+                    msg = 'Invalid modification';
+                    break;
+                case FileError.INVALID_STATE_ERR:
+                    msg = 'Invalid state';
+                    break;
+                default:
+                    msg = 'Unknown error';
+                    break;
+            }
+            console.error('File System Error (' + fileName + '): ' + msg);
+        };
+
+        var fileTransferErrorHandler = function (error) {
+            var msg = '';
+
+            switch (error.code) {
+                case FileTransferError.FILE_NOT_FOUND_ERR:
+                    msg = 'File could not be found';
+                    break;
+                case FileTransferError.INVALID_URL_ERR:
+                    msg = 'URL invalid';
+                    break;
+                case FileTransferError.CONNECTION_ERR:
+                    msg = 'Connection error';
+                    break;
+                case FileTransferError.ABORT_ERR:
+                    msg = 'Aborted';
+                    break;
+                case FileTransferError.NOT_MODIFIED_ERR:
+                    msg = 'Not modified';
+                    break;
+            }
+            console.error('File Transfer Error: ' + msg + '\n' +
+                'Load source: ' + error.source + '\n' +
+                'Load target: ' + error.target + '\n' +
+                'HTTP status: ' + error.http_status);
+        };
+
+        if (typeof cordova !== 'undefined') {
+            var
+                // Initiate plugin
+                fileTransfer = new FileTransfer(),
+                // Get the device's private & persistent application storage directory
+                localDir = cordova.file.dataDirectory;
+
+            /*
+             * No need to download a file twice: Resolving the path in localDir to a URL gives us
+             * a DirectoryEntry object, which in turn lets us search for existing files within
+             * that directory.
+             */
+            window.resolveLocalFileSystemURL(localDir, function (directoryEntry) {
+
+                $.each(fileNames, function (index, fileName) {
+                    var
+                        source = encodeURI(urls[index]),
+                        // filetransfer plugin requires path to file, not folder:
+                        target = localDir + fileNames[index];
+
+                    directoryEntry.getFile(fileNames[index], {create: false},
+                        function (file) {
+                            console.log(file.name + ' already exists. Skipping download.');
+                        },
+                        function (error) {
+                            if (error.code === FileError.NOT_FOUND_ERR) {
+                                // File not found >> Download!
+                                fileTransfer.download(source + '!', target, function (entry) {
+                                    console.log("Download complete: " + entry.toURL());
+                                }, fileTransferErrorHandler.bind(null, error));
+                            } else {
+                                // Other errors get forwarded
+                                fileSystemErrorHandler(fileName, error);
+                            }
+                        });
                 });
-            });
-        } else {
-            var projects = ViewerData.getProjects();
-            console.log(projects);
+                // If this gets thrown, there's something wrong with adressing the system.
+            }, fileSystemErrorHandler.bind(null, localDir));
         }
-    }
-
-    function loadProject(projectId) {
-        // TODO: fill
-        var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL + projectId;
-
-        Utils.getRequest(url, '', function (response) {
-            var project = $.parseJSON(response);
-            ViewerData.setProjects(project);
-        });
-    }
-
-    function getProposalId() {
-        var href = $(FinalConstants.JQ_SELECTOR_TO_PROPOSAL_ID)
-                .attr('href');
-        var id = href.substr(href.indexOf(FinalConstants.SEARCH_KEY_PROPOSAL_ID) +
-                FinalConstants.SEARCH_KEY_PROPOSAL_ID.length, FinalConstants.PROPOSAL_ID_LENGTH);
-        return Number(id);
-    }
-
-    function initModelFilesTransfer() {
-        console.log("Downloading model files…");
-        // TODO: Check if getModels() !== null; Need to implement a wait cycle or something
-        var models = ViewerData.getModels();
-        var url = [],
-                modelIds = [];
-
-        $.each(models, function (index, model) {
-            url.push(FinalConstants.BETAVILLE_BASE_URL + model.filepath);
-            modelIds.push(model.id);
-        });
-
-        $.each(modelIds, function (index, modelId) {
-            Utils.getRequest(url[index], 'blob', function (response) {
-                loadZip(response, modelId);
-            });
-        });
     }
 
     function loadZip(file, modelId) {
         var windowUrl = window.URL || window.webkitURL || window.mozURL;
-        var fileName, fileEnding, modelId;
+        var fileName, fileEnding;
 
         // 'zip' refers to zip.js library and corresponding objects
         zip.workerScriptsPath = FinalConstants.WORKER_SCRIPTS_PATH;
@@ -237,12 +303,6 @@ var Loader = (function () {
             // get project ids
             // get proposals from ids
             // get models from proposals
-
-//            var projectId = extractProjectId();
-//            loadProject(projectId);
-//
-//            loadFreezes(projectId);
-//            loadProposals(projectId);
         }
     };
 }());
@@ -316,6 +376,7 @@ var Utils = (function () {
 }());
 
 $(document).on("deviceready", function () {
+//    var fileSys = window.resolveLocalFileSystemURL();
     deviceReadyDeferred.resolve();
 });
 
@@ -325,12 +386,17 @@ $(document).on("mobileinit", function () {
 
 $.when(deviceReadyDeferred, jqmReadyDeferred).then(init);
 
-
+// TODO: This is only here for testing.
+// Should you find this in the final version, send me a screencap
+// and I shall hang my head in shame.
 $(document).ready(function () {
-    init();
+    if (typeof cordova === 'undefined') {
+        init();
+    }
 });
 
 function init() {
+    console.log('init');
     $('#button').click(function () {
         Loader.load();
     });

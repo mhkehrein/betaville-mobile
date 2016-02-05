@@ -1,4 +1,4 @@
-/* global zip */
+/* global zip, cordova */
 
 var deviceReadyDeferred = $.Deferred();
 var jqmReadyDeferred = $.Deferred();
@@ -11,10 +11,11 @@ var jqmReadyDeferred = $.Deferred();
 var FinalConstants = (function () {
     'use strict';
     var constants = {
-        // http url for local testing, relative url on live server. Comment when not needed:
-//        BETAVILLE_BASE_URL: '/betaville-server',
-//        BETAVILLE_BASE_URL: 'http://betaville.hs-bremen.de:8080/betaville-server',
-        BETAVILLE_BASE_URL: 'http://betaville.hs-bremen.de:8080/betaville-server',
+        // Comment out which URL isn't needed:
+        // Live server:
+//         BETAVILLE_BASE_URL: 'http://betaville.hs-bremen.de:8080/betaville-server',
+        // Test server:
+        BETAVILLE_BASE_URL: 'http://195.37.176.183:8080/betaville-server',
         PROJECTS_API_URL: '/api/projects/',
         JQ_SELECTOR_TO_PROJECT_ID: '#breadcrumbs a[href*="proposals.jsf?projectId="]',
         JQ_SELECTOR_TO_PROPOSAL_ID: '#breadcrumbs a[href*="proposals.jsf?proposalId="]',
@@ -38,20 +39,12 @@ var FinalConstants = (function () {
 var ViewerData = (function () {
     'use strict';
     var
-            freezes = [],
-            modelsInProposal = null,
-            project,
-            proposalId;
+        modelsInProposal = null,
+        projects,
+        proposalId;
 
     // Public methods
     return {
-        setFreezes: function (freezesFromJson) {
-            freezes = (Array.isArray(freezesFromJson) ? freezesFromJson : []);
-            return (freezes.length > 0);
-        },
-        getFreezes: function () {
-            return freezes;
-        },
         setModels: function (models) {
             modelsInProposal = (Array.isArray(models)) ? models : [];
             return (models.length > 0);
@@ -68,7 +61,7 @@ var ViewerData = (function () {
          */
         getModelFromName: function (fileName) {
             var matchingModel = null;
-            jQuery.each(modelsInProposal, function (index, model) {
+            $.each(modelsInProposal, function (index, model) {
                 if (fileName === model.packageFilename) {
                     matchingModel = model;
                     return false;
@@ -77,7 +70,7 @@ var ViewerData = (function () {
             return matchingModel;
         },
         setModelBlobUrls: function (modelId, objBlob, mtlBlob) {
-            jQuery.each(modelsInProposal, function (index, listEntry) {
+            $.each(modelsInProposal, function (index, listEntry) {
                 if (listEntry.id === modelId) {
                     listEntry.objBlobUrl = (objBlob !== null) ? objBlob : listEntry.objBlobUrl;
                     listEntry.mtlBlobUrl = (mtlBlob !== null) ? mtlBlob : listEntry.mtlBlobUrl;
@@ -94,16 +87,18 @@ var ViewerData = (function () {
             projectId = Number(id);
         },
         getProjectId: function () {
-            return Number(project.id);
+            // TODO: do something useful
+            return Number(0);
         },
-        setProject: function (projectObject) {
-            project = projectObject;
+        setProjects: function (projectObject) {
+            projects = projectObject;
         },
-        getProject: function () {
-            return project;
+        getProjects: function () {
+            return projects;
         }
     };
 }());
+
 
 /**
  * Loads Freezes and Proposals into ViewerData.
@@ -111,119 +106,166 @@ var ViewerData = (function () {
  */
 var Loader = (function () {
     'use strict';
+    var projectsLoadedDeferred = $.Deferred();
 
     // Private methods
+
     function loadAllProjects() {
-        var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL;
-
+        console.log('loadAllProjects');
+        // TODO: Remove/alter filter!
+        var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL; // + 'filter';
+//        url = url + '?radius=10000' + '&location=bremen';// + '&lat=53.05515377612419' + '&lng=8.784655519638022';
         Utils.getRequest(url, '', function (response) {
-            var project = jQuery.parseJSON(response);
-
-            ViewerData.setProject(project);
+            var projects = $.parseJSON(response);
+            ViewerData.setProjects(projects);
+            projectsLoadedDeferred.resolve();
         });
+        return projectsLoadedDeferred;
     }
 
-    function extractProjectId() {
-        var href = jQuery(FinalConstants.JQ_SELECTOR_TO_PROJECT_ID)
-                .attr('href');
-        var id = href.substr(href.indexOf(FinalConstants.SEARCH_KEY_PROJECT_ID) +
-                FinalConstants.SEARCH_KEY_PROJECT_ID.length, FinalConstants.PROJECT_ID_LENGTH);
-        return id;
-    }
+    function loadProposals() {
+        console.log('loadProposals');
+        var
+            projects = ViewerData.getProjects(),
+            urls = [],
+            fileNames = [];
 
-    function loadFreezes(projectId) {
-        console.log("Downloading freezes…");
-        var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL + projectId + '/freezes';
+        // TODO: Iterate through every possible proposal -
+        // Since the proposals can be recursively nested (see API or JSON),
+        // we may not catch every possible proposal with this.
+        /*
+         * Iterate through the projects object, searching for the URLs
+         * to the files associated with the various projects
+         */
+        $.each(projects, function (index, project) {
+            var proposals = project.proposals;
 
-        Utils.getRequest(url, '', function (response) {
-            var freezesJson = jQuery.parseJSON(response);
-            handleFreezes(freezesJson);
-        });
-    }
+            $.each(proposals, function (index, proposal) {
+                var propHead = proposal.headVersion;
 
-    function handleFreezes(freezesJson) {
-        var freezes = [];
-        jQuery.each(freezesJson, function (index, freeze) {
-            freezes.push(freeze);
-        });
-        ViewerData.setFreezes(freezes);
-    }
+                if (propHead && propHead.models) {
+                    var models = propHead.models;
 
-    function loadProposals(projectId) {
-        var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL + projectId + '/proposals';
+                    $.each(models, function (index, model) {
+                        var
+                            modelId = model.id,
+                            url = FinalConstants.BETAVILLE_BASE_URL + model.filepath;
 
-        Utils.getRequest(url, '', function (response) {
-            var proposalId = getProposalId();
-            var proposalsJson = jQuery.parseJSON(response);
-
-            jQuery.each(proposalsJson, function (index, proposal) {
-                if (proposal.id === proposalId) {
-                    ViewerData.setModels(proposal.headVersion.models);
-                    ViewerData.setProposalId(proposalId);
-                    initModelFilesTransfer();
-                    return false;
+                        // Since models may use the same file, we can check for duplicates
+                        if (urls.indexOf(url) === -1) {
+                            urls.push(url);
+                            fileNames.push(model.packageFilename);
+                        }
+                    });
                 }
             });
         });
+        initModelFilesTransfer(urls, fileNames);
     }
 
-    function loadProject(projectId) {
-        // TODO: fill
-        var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL + projectId;
+    function initModelFilesTransfer(urls, fileNames) {
+        console.log('Downloading model files…');
 
-        Utils.getRequest(url, '', function (response) {
-            var project = jQuery.parseJSON(response);
-            ViewerData.setProject(project);
-        });
-    }
+        var fileSystemErrorHandler = function (fileName, e) {
+            var msg = '';
 
-    function getProposalId() {
-        var href = jQuery(FinalConstants.JQ_SELECTOR_TO_PROPOSAL_ID)
-                .attr('href');
-        var id = href.substr(href.indexOf(FinalConstants.SEARCH_KEY_PROPOSAL_ID) +
-                FinalConstants.SEARCH_KEY_PROPOSAL_ID.length, FinalConstants.PROPOSAL_ID_LENGTH);
-        return Number(id);
-    }
+            switch (e.code) {
+                case FileError.QUOTA_EXCEEDED_ERR:
+                    msg = 'Storage quota exceeded';
+                    break;
+                case FileError.NOT_FOUND_ERR:
+                    msg = 'File not found';
+                    break;
+                case FileError.SECURITY_ERR:
+                    msg = 'Security error';
+                    break;
+                case FileError.INVALID_MODIFICATION_ERR:
+                    msg = 'Invalid modification';
+                    break;
+                case FileError.INVALID_STATE_ERR:
+                    msg = 'Invalid state';
+                    break;
+                default:
+                    msg = 'Unknown error';
+                    break;
+            }
+            console.log('File System Error (' + fileName + '): ' + msg);
+        };
 
-    function initModelFilesTransfer() {
-        console.log("Downloading model files…");
-        // TODO: Check if getModels() !== null; Need to implement a wait cycle or something
-        var models = ViewerData.getModels();
-        var url = [],
-                modelIds = [];
+        if (typeof cordova !== 'undefined') {
+            var
+                // Initiate plugin
+                fileTransfer = new FileTransfer(),
+                // Get the device's private & persistent application storage directory
+                localDir = cordova.file.dataDirectory;
 
-        jQuery.each(models, function (index, model) {
-            url.push(FinalConstants.BETAVILLE_BASE_URL + model.filepath);
-            modelIds.push(model.id);
-        });
+            /*
+             * No need to download a file twice: Resolving the path in localDir to a URL gives us
+             * a DirectoryEntry object, which in turn lets us search for existing files within
+             * that directory.
+             */
+            window.resolveLocalFileSystemURL(localDir, function (directoryEntry) {
 
-        jQuery.each(modelIds, function (index, modelId) {
-            Utils.getRequest(url[index], 'blob', function (response) {
-                loadZip(response, modelId);
-            });
-        });
+                // Iterate through
+                $.each(fileNames, function (index, fileName) {
+                    var
+                        source = encodeURI(urls[index]),
+                        // filetransfer plugin requires path to file, not folder:
+                        target = localDir + fileNames[index];
+
+                    directoryEntry.getFile(fileNames[index], {
+                        create: false,
+                        exclusive: false
+                    }, function (file) {
+                        console.log(file.name + ' exists');
+                    }, function (error) {
+                        if (error.code === FileError.NOT_FOUND_ERR) {
+                            // File not found >> Download!
+                            console.log('downloading: ' + fileName);
+                            fileTransfer.download(
+                                source,
+                                target,
+                                function (entry) {
+                                    console.log("download complete: " + entry.toURL());
+                                },
+                                function (error) {
+                                    console.log("download error source " + error.source);
+                                    console.log("download error target " + error.target);
+                                    console.log("upload error code" + error.code);
+                                }
+                            );
+                        } else {
+                            // Other errors get forwarded
+                            fileSystemErrorHandler(fileName, error);
+                        }
+                    });
+                });
+                // If this gets thrown, there's something wrong with adressing the system.
+            }, fileSystemErrorHandler.bind(null, localDir));
+        }
     }
 
     function loadZip(file, modelId) {
         var windowUrl = window.URL || window.webkitURL || window.mozURL;
-        var fileName, fileEnding, modelId;
+        var fileName, fileEnding;
 
         // 'zip' refers to zip.js library and corresponding objects
         zip.workerScriptsPath = FinalConstants.WORKER_SCRIPTS_PATH;
 
         zip.createReader(new zip.BlobReader(file), function (reader) {
+            // createReader return function
             reader.getEntries(function (entries) {
                 if (entries.length) {
-                    jQuery.each(entries, function (index, entry) {
+                    $.each(entries, function (index, entry) {
                         fileName = entry.filename;
                         fileEnding = fileName.substr(-3);
                         getEntryData(entry, fileEnding, modelId);
                     });
                 }
-            },
-                    function (error) {
-                        console.error(error);
-                    });
+            }, function (error) {
+                // getEntries onError
+                console.error(error);
+            });
         });
 
         function getEntryData(entry, fileEnding, modelId) {
@@ -243,13 +285,13 @@ var Loader = (function () {
     // Public methods
     return {
         load: function () {
-            loadAllProjects();
-            console.log(ViewerData.getProject());
-//            var projectId = extractProjectId();
-//            loadProject(projectId);
-//
-//            loadFreezes(projectId);
-//            loadProposals(projectId);
+            console.log('load');
+            var loadedDeferred = loadAllProjects();
+            $.when(loadedDeferred).then(loadProposals);
+
+            // get project ids
+            // get proposals from ids
+            // get models from proposals
         }
     };
 }());
@@ -323,6 +365,7 @@ var Utils = (function () {
 }());
 
 $(document).on("deviceready", function () {
+//    var fileSys = window.resolveLocalFileSystemURL();
     deviceReadyDeferred.resolve();
 });
 
@@ -332,8 +375,20 @@ $(document).on("mobileinit", function () {
 
 $.when(deviceReadyDeferred, jqmReadyDeferred).then(init);
 
+// TODO: This is only here for testing.
+// Should you find this in the final version, send me a screencap
+// and I shall hang my head in shame.
+$(document).ready(function () {
+    if (typeof cordova === 'undefined') {
+        init();
+    }
+});
+
 function init() {
-    Loader.load();
-//    loadProject();
+    console.log('init');
+    $('#button').click(function () {
+        console.log('click');
+        Loader.load();
+    });
 }
 

@@ -27,6 +27,7 @@
         <allow-intent href="market:*"/>
         <preference name="KeepRunning" value="false"/>
         <preference name="LoadingDialog" value="Betaville Mobile Viewer, Loading…"/>
+        <preference name="AndroidPersistentFileLocation" value="Internal" />
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*"/>

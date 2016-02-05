@@ -12,7 +12,12 @@
                 * Enable inline JS: add 'unsafe-inline' to default-src
                 * Enable eval(): add 'unsafe-eval' to default-src
         -->
-        <meta http-equiv="Content-Security-Policy" content="default-src *.hs-bremen.de 'self' data: gap:; style-src 'self' 'unsafe-inline'; media-src *; connect-src http://betaville.hs-bremen.de:8080/betaville-server/ http://195.37.176.183:8080/betaville-server/">
+        <meta http-equiv="Content-Security-Policy"
+              content="default-src *.hs-bremen.de 'self' data: gap:;
+              style-src 'self' 'unsafe-inline';
+              media-src *;
+              connect-src http://betaville.hs-bremen.de:8080/betaville-server/
+              http://195.37.176.183:8080/betaville-server/">
 
         <link rel="stylesheet" href="lib/jquery.mobile-1.4.5.min.css" />
         <link rel="stylesheet" href="css/viewer.css" />
@@ -24,7 +29,7 @@
         <script src="lib/zipjs/zip.js"></script>
 
         <!-- Revision r73 -->
-        <script src="lib/threejs/three.js"></script>
+        <script src="lib/threejs/three.min.js"></script>
         <script src="lib/threejs/MTLLoader.js"></script>
         <script src="lib/threejs/OBJLoader.js"></script>
         <script src="lib/threejs/OBJMTLLoader.js"></script>

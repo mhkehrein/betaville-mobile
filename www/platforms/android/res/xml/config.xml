@@ -30,6 +30,7 @@
     <allow-intent href="market:*" />
     <preference name="KeepRunning" value="false" />
     <preference name="LoadingDialog" value="Betaville Mobile Viewer, Loading…" />
+    <preference name="AndroidPersistentFileLocation" value="Internal" />
     <name>Betaville Mobile Viewer</name>
     <description>
         A mobile app for usage in conjunction with the Betaville project of the University of Applied Sciences Bremen.
