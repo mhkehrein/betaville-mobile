@@ -164,6 +164,8 @@ var Loader = (function () {
     function initModelFilesTransfer(urls, fileNames) {
         console.log('Downloading model files…');
 
+
+
         var fileSystemErrorHandler = function (fileName, error) {
             var msg = '';
 
@@ -190,7 +192,7 @@ var Loader = (function () {
             console.error('File System Error (' + fileName + '): ' + msg);
         };
 
-        var fileTransferErrorHandler = function (error) {
+        var fileTransferErrorHandler = function (fileName, error) {
             var msg = '';
 
             switch (error.code) {
@@ -210,18 +212,25 @@ var Loader = (function () {
                     msg = 'Not modified';
                     break;
             }
-            console.error('File Transfer Error: ' + msg + '\n' +
+            console.error('File Transfer Error (' + fileName + '): ' + msg + '\n' +
                 'Load source: ' + error.source + '\n' +
                 'Load target: ' + error.target + '\n' +
                 'HTTP status: ' + error.http_status);
         };
 
+
         if (typeof cordova !== 'undefined') {
+
             var
                 // Initiate plugin
                 fileTransfer = new FileTransfer(),
                 // Get the device's private & persistent application storage directory
-                localDir = cordova.file.dataDirectory;
+                localDir = cordova.file.dataDirectory,
+                progressValue = 0;
+
+            $('#progressbar').progressbar('option', 'max', urls.length);
+            $('#progressbar').progressbar('value', 0);
+
 
             /*
              * No need to download a file twice: Resolving the path in localDir to a URL gives us
@@ -239,19 +248,23 @@ var Loader = (function () {
                     directoryEntry.getFile(fileNames[index], {create: false},
                         function (file) {
                             console.log(file.name + ' already exists. Skipping download.');
+                            $('#progressbar').progressbar('value', (progressValue += 1));
                         },
                         function (error) {
                             if (error.code === FileError.NOT_FOUND_ERR) {
                                 // File not found >> Download!
-                                fileTransfer.download(source + '!', target, function (entry) {
+                                fileTransfer.download(source, target, function (entry) {
                                     console.log("Download complete: " + entry.toURL());
-                                }, fileTransferErrorHandler.bind(null, error));
+                                    $('#progressbar').progressbar('value', (progressValue += 1));
+                                    // TODO: error = user feedback!
+                                }, fileTransferErrorHandler.bind(null, fileName));
                             } else {
                                 // Other errors get forwarded
-                                fileSystemErrorHandler(fileName, error);
+                                fileSystemErrorHandler.bind(null, fileName);
                             }
                         });
                 });
+                // TODO: When done, user feedback >> progressbar
                 // If this gets thrown, there's something wrong with adressing the system.
             }, fileSystemErrorHandler.bind(null, localDir));
         }
@@ -397,7 +410,11 @@ $(document).ready(function () {
 
 function init() {
     console.log('init');
-    $('#button').click(function () {
+    $('#button_download').tap(function () {
+        $('#button_download').hide();
+        $('#progressbar').progressbar({
+            value: false
+        }).show();
         Loader.load();
     });
 }

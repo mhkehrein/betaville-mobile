@@ -111,8 +111,7 @@ var Loader = (function () {
     // Private methods
 
     function loadAllProjects() {
-        console.log('loadAllProjects');
-        // TODO: Remove/alter filter!
+        // TODO: Remove/use filter!
         var url = FinalConstants.BETAVILLE_BASE_URL + FinalConstants.PROJECTS_API_URL; // + 'filter';
 //        url = url + '?radius=10000' + '&location=bremen';// + '&lat=53.05515377612419' + '&lng=8.784655519638022';
         Utils.getRequest(url, '', function (response) {
@@ -124,7 +123,6 @@ var Loader = (function () {
     }
 
     function loadProposals() {
-        console.log('loadProposals');
         var
             projects = ViewerData.getProjects(),
             urls = [],
@@ -166,10 +164,12 @@ var Loader = (function () {
     function initModelFilesTransfer(urls, fileNames) {
         console.log('Downloading model files…');
 
-        var fileSystemErrorHandler = function (fileName, e) {
+
+
+        var fileSystemErrorHandler = function (fileName, error) {
             var msg = '';
 
-            switch (e.code) {
+            switch (error.code) {
                 case FileError.QUOTA_EXCEEDED_ERR:
                     msg = 'Storage quota exceeded';
                     break;
@@ -189,15 +189,48 @@ var Loader = (function () {
                     msg = 'Unknown error';
                     break;
             }
-            console.log('File System Error (' + fileName + '): ' + msg);
+            console.error('File System Error (' + fileName + '): ' + msg);
         };
 
+        var fileTransferErrorHandler = function (fileName, error) {
+            var msg = '';
+
+            switch (error.code) {
+                case FileTransferError.FILE_NOT_FOUND_ERR:
+                    msg = 'File could not be found';
+                    break;
+                case FileTransferError.INVALID_URL_ERR:
+                    msg = 'URL invalid';
+                    break;
+                case FileTransferError.CONNECTION_ERR:
+                    msg = 'Connection error';
+                    break;
+                case FileTransferError.ABORT_ERR:
+                    msg = 'Aborted';
+                    break;
+                case FileTransferError.NOT_MODIFIED_ERR:
+                    msg = 'Not modified';
+                    break;
+            }
+            console.error('File Transfer Error (' + fileName + '): ' + msg + '\n' +
+                'Load source: ' + error.source + '\n' +
+                'Load target: ' + error.target + '\n' +
+                'HTTP status: ' + error.http_status);
+        };
+
+
         if (typeof cordova !== 'undefined') {
+
             var
                 // Initiate plugin
                 fileTransfer = new FileTransfer(),
                 // Get the device's private & persistent application storage directory
-                localDir = cordova.file.dataDirectory;
+                localDir = cordova.file.dataDirectory,
+                progressValue = 0;
+
+            $('#progressbar').progressbar('option', 'max', urls.length);
+            $('#progressbar').progressbar('value', 0);
+
 
             /*
              * No need to download a file twice: Resolving the path in localDir to a URL gives us
@@ -206,39 +239,30 @@ var Loader = (function () {
              */
             window.resolveLocalFileSystemURL(localDir, function (directoryEntry) {
 
-                // Iterate through
                 $.each(fileNames, function (index, fileName) {
                     var
                         source = encodeURI(urls[index]),
                         // filetransfer plugin requires path to file, not folder:
                         target = localDir + fileNames[index];
 
-                    directoryEntry.getFile(fileNames[index], {
-                        create: false,
-                        exclusive: false
-                    }, function (file) {
-                        console.log(file.name + ' exists');
-                    }, function (error) {
-                        if (error.code === FileError.NOT_FOUND_ERR) {
-                            // File not found >> Download!
-                            console.log('downloading: ' + fileName);
-                            fileTransfer.download(
-                                source,
-                                target,
-                                function (entry) {
-                                    console.log("download complete: " + entry.toURL());
-                                },
-                                function (error) {
-                                    console.log("download error source " + error.source);
-                                    console.log("download error target " + error.target);
-                                    console.log("upload error code" + error.code);
-                                }
-                            );
-                        } else {
-                            // Other errors get forwarded
-                            fileSystemErrorHandler(fileName, error);
-                        }
-                    });
+                    directoryEntry.getFile(fileNames[index], {create: false},
+                        function (file) {
+                            console.log(file.name + ' already exists. Skipping download.');
+                            $('#progressbar').progressbar('value', (progressValue += 1));
+                        },
+                        function (error) {
+                            if (error.code === FileError.NOT_FOUND_ERR) {
+                                // File not found >> Download!
+                                fileTransfer.download(source, target, function (entry) {
+                                    console.log("Download complete: " + entry.toURL());
+                                    $('#progressbar').progressbar('value', (progressValue += 1));
+                                    // TODO: error = user feedback!
+                                }, fileTransferErrorHandler.bind(null, fileName));
+                            } else {
+                                // Other errors get forwarded
+                                fileSystemErrorHandler.bind(null, fileName);
+                            }
+                        });
                 });
                 // If this gets thrown, there's something wrong with adressing the system.
             }, fileSystemErrorHandler.bind(null, localDir));
@@ -285,7 +309,6 @@ var Loader = (function () {
     // Public methods
     return {
         load: function () {
-            console.log('load');
             var loadedDeferred = loadAllProjects();
             $.when(loadedDeferred).then(loadProposals);
 
@@ -386,8 +409,11 @@ $(document).ready(function () {
 
 function init() {
     console.log('init');
-    $('#button').click(function () {
-        console.log('click');
+    $('#button_download').tap(function () {
+        $('#button_download').hide();
+        $('#progressbar').progressbar({
+            value: false
+        }).show();
         Loader.load();
     });
 }

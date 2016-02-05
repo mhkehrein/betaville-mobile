@@ -19,12 +19,14 @@
               connect-src http://betaville.hs-bremen.de:8080/betaville-server/
               http://195.37.176.183:8080/betaville-server/">
 
-        <link rel="stylesheet" href="lib/jquery.mobile-1.4.5.min.css" />
-        <link rel="stylesheet" href="css/viewer.css" />
+        <link rel="stylesheet" href="css/jquery.mobile-1.4.5.min.css" />
+        <link rel="stylesheet" href="css/viewer-mobile.min.css" />
+        <link rel="stylesheet" href="css/jquery.mobile.icons.min.css" />
 
-        <script src="lib/jquery-2.2.0.min.js"></script>
-        <script src="js/viewer.js"></script>
-        <script src="lib/jquery.mobile-1.4.5.min.js"></script>
+        <link rel="stylesheet" href="css/jquery-ui-1.11.4.custom/jquery-ui.css" />
+        <link rel="stylesheet" href="css/jquery-ui-1.11.4.custom/jquery-ui.structure.css" />
+        <link rel="stylesheet" href="css/jquery-ui-1.11.4.custom/jquery-ui.theme.css" />
+        <link rel="stylesheet" href="css/custom.css" />
 
         <script src="lib/zipjs/zip.js"></script>
 
@@ -34,14 +36,29 @@
         <script src="lib/threejs/OBJLoader.js"></script>
         <script src="lib/threejs/OBJMTLLoader.js"></script>
 
+        <script src="lib/jquery-2.2.0.min.js"></script>
+        <script src="js/viewer.js"></script>
+        <script src="lib/jquery.mobile-1.4.5.min.js"></script>
+        <script src="lib/jquery-ui.js"></script>
+
+
+
     </head>
 
     <body>
         <div data-role="page" id="page">
-            <div id="foo">
-                <h1>'ello!</h1>
-                <p>Press button to download project data:</p>
-                <input id="button" type="submit" value="button" name="download_button">
+            <div id="content" class="ui-content" role="main">
+                <div>
+                    <img src="resources/logo.png" width="260" height="46" alt="betaville logo"/>
+                </div>
+                <div class="ui-body">
+                    <h1>Welcome to the Betaville Proposal Viewer!</h1>
+                    <p>In order to use this app, please make sure that your data is up to date:</p>
+
+                    <button type="submit" id="button_download" class="ui-btn"><span>Download project data</span></button>
+                    <div id="progressbar" class="ui-progressbar" style="display: none"></div>
+
+                </div>
             </div>
         </div>
         <script src="cordova.js"></script>

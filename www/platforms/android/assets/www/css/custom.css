@@ -1,0 +1,11 @@
+/*
+    This file contains settings to override the premade ones from jQuery's Theme Roller files.
+
+    Created on : 05.02.2016, 21:37:07
+    Author     : Martin Kehrein
+*/
+
+.ui-progressbar-value {
+    background-color: #006699;
+}
+
