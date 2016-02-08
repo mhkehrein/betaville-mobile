@@ -24,7 +24,7 @@ button,
 .ui-btn {
 	font-size: 1em;
 	line-height: 1.3;
-	     font-family: lato, sans-serif /*{global-font-family}*/;
+	       font-family: lato, sans-serif /*{global-font-family}*/;
 }
 legend,
 .ui-input-text input,
@@ -238,7 +238,7 @@ html body .ui-group-theme-a .ui-bar-inherit {
 .ui-overlay-a,
 .ui-page-theme-a,
 .ui-page-theme-a .ui-panel-wrapper {
-	background-color: #f9f9f9 /*{a-page-background-color}*/;
+	background-color: #fff /*{a-page-background-color}*/;
 	border-color: #bbbbbb /*{a-page-border}*/;
 	color: #333333 /*{a-page-color}*/;
 	text-shadow: 0 /*{a-page-shadow-x}*/ 1px /*{a-page-shadow-y}*/ 0 /*{a-page-shadow-radius}*/ #f3f3f3 /*{a-page-shadow-color}*/;
@@ -252,8 +252,7 @@ html body .ui-group-theme-a .ui-body-inherit,
 html .ui-panel-page-container-a {
 	background-color: #ffffff /*{a-body-background-color}*/;
 	border-color: #dddddd /*{a-body-border}*/;
-	color: #8F8F8F /*{a-body-color}*/;
-	text-shadow:  /*{a-body-shadow-x}*/  /*{a-body-shadow-y}*/  /*{a-body-shadow-radius}*/  /*{a-body-shadow-color}*/;
+	color: #8F8F8F /*{a-body-color}*/; text-shadow: /*{a-body-shadow-x}*/  /*{a-body-shadow-y}*/  /*{a-body-shadow-radius}*/  /*{a-body-shadow-color}*/;
 }
 .ui-body-a {
 	border-width: 1px;
@@ -297,10 +296,9 @@ html .ui-bar-a .ui-btn:visited,
 html .ui-body-a .ui-btn:visited,
 html body .ui-group-theme-a .ui-btn:visited,
 html head + body .ui-btn.ui-btn-a:visited {
-	background-color: #EEEFEB  /*{a-bup-background-color}*/;
+	background-color: #EEEFEB /*{a-bup-background-color}*/;
 	border-color: #dddddd /*{a-bup-border}*/;
-	color: #343A41 /*{a-bup-color}*/;
-	text-shadow:  /*{a-bup-shadow-x}*/  /*{a-bup-shadow-y}*/  /*{a-bup-shadow-radius}*/  /*{a-bup-shadow-color}*/;
+	color: #343A41 /*{a-bup-color}*/; text-shadow: /*{a-bup-shadow-x}*/  /*{a-bup-shadow-y}*/  /*{a-bup-shadow-radius}*/  /*{a-bup-shadow-color}*/;
 }
 /* Button hover */
 .ui-page-theme-a .ui-btn:hover,
@@ -321,8 +319,7 @@ html body .ui-group-theme-a .ui-btn:active,
 html head + body .ui-btn.ui-btn-a:active {
 	background-color: #EEEFEB /*{a-bdown-background-color}*/;
 	border-color: #dddddd /*{a-bdown-border}*/;
-	color: #333333 /*{a-bdown-color}*/;
-	text-shadow:  /*{a-bdown-shadow-x}*/  /*{a-bdown-shadow-y}*/  /*{a-bdown-shadow-radius}*/  /*{a-bdown-shadow-color}*/;
+	color: #333333 /*{a-bdown-color}*/; text-shadow: /*{a-bdown-shadow-x}*/  /*{a-bdown-shadow-y}*/  /*{a-bdown-shadow-radius}*/  /*{a-bdown-shadow-color}*/;
 }
 /* Active button */
 .ui-page-theme-a .ui-btn.ui-btn-active,

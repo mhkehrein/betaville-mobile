@@ -9,3 +9,41 @@
     background-color: #006699;
 }
 
+#content {
+    margin: 2%;
+}
+
+#title {
+    margin-top: 15%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#title img {
+    height: 2.5em;
+}
+
+#title h1 {
+    font-family: lato, sans-serif;
+    font-size: 3em !important;
+    color: #004A6E;
+    margin: 0 0 0 0.1em !important;
+}
+
+#subtitle {
+    margin-top: -0.5em;
+    text-align: center;
+}
+
+#progress_bar {
+    width: 60%;
+    margin: auto;
+}
+
+.progress_text {
+    font-size: 0.8em;
+    display: flex;
+    justify-content: center;
+    /*margin-top: -0.1em;*/
+}

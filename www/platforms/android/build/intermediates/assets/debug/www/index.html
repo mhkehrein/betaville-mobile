@@ -47,17 +47,21 @@
 
     <body>
         <div data-role="page" id="page">
-            <div id="content" class="ui-content" role="main">
-                <div>
-                    <img src="resources/logo.png" width="260" height="46" alt="betaville logo"/>
+            <div id="content" class="ui-body" role="main">
+                <div id="title">
+                    <!-- <img id="logo" src="resources/logo-full.png" width="260" height="46" alt="betaville logo"/> -->
+                    <img src="resources/drawable-hdpi/icon.png" alt="betaville_icon"/>
+                    <h1>betaville</h1>
                 </div>
-                <div class="ui-body">
-                    <h1>Welcome to the Betaville Proposal Viewer!</h1>
-                    <p>In order to use this app, please make sure that you have the current proposal versions available:</p>
-
-                    <button type="submit" id="button_download" class="ui-btn"><span>Download project data</span></button>
-                    <div id="progressbar" class="ui-progressbar" style="display: none"></div>
-
+                <h4 id="subtitle">Proposal Viewer</h4>
+                <div class="ui-content">
+                    <button type="submit" id="button_download" class="ui-btn" style="display: none"><span>Download project data</span></button>
+                    <div id="loading-ui" style="display: none">
+                        <div id="progress_bar" class="ui-progressbar"></div>
+                        <p class="progress_text">Loading… </p>
+                    </div>
+                    <div id="control-ui" style="display:none">
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,4 +1,4 @@
-/* global zip, cordova */
+/* global zip, cordova, FileError, FileTransferError */
 
 var deviceReadyDeferred = $.Deferred();
 var jqmReadyDeferred = $.Deferred();
@@ -218,6 +218,8 @@ var Loader = (function () {
                 'HTTP status: ' + error.http_status);
         };
 
+        UiHelper.updateBar('option', 'max', urls.length);
+        UiHelper.updateBar('value', 0);
 
         if (typeof cordova !== 'undefined') {
 
@@ -228,8 +230,9 @@ var Loader = (function () {
                 localDir = cordova.file.dataDirectory,
                 progressValue = 0;
 
-            $('#progressbar').progressbar('option', 'max', urls.length);
-            $('#progressbar').progressbar('value', 0);
+
+//            $('#progressbar').progressbar('option', 'max', urls.length);
+//            $('#progressbar').progressbar('value', 0);
 
 
             /*
@@ -248,14 +251,15 @@ var Loader = (function () {
                     directoryEntry.getFile(fileNames[index], {create: false},
                         function (file) {
                             console.log(file.name + ' already exists. Skipping download.');
-                            $('#progressbar').progressbar('value', (progressValue += 1));
+                            UiHelper.updateBar('value', (progressValue += 1));
                         },
                         function (error) {
                             if (error.code === FileError.NOT_FOUND_ERR) {
                                 // File not found >> Download!
                                 fileTransfer.download(source, target, function (entry) {
                                     console.log("Download complete: " + entry.toURL());
-                                    $('#progressbar').progressbar('value', (progressValue += 1));
+//                                    $('#progressbar').progressbar('value', (progressValue += 1));
+                                    UiHelper.updateBar('value', (progressValue += 1));
                                     // TODO: error = user feedback!
                                 }, fileTransferErrorHandler.bind(null, fileName));
                             } else {
@@ -388,6 +392,37 @@ var Utils = (function () {
     };
 }());
 
+var UiHelper = (function () {
+    return {
+        setupLoadingUi: function () {
+            $('#progress_bar').progressbar({
+                value: false,
+                change: function () {
+                    var
+                        max = $('#progress_bar').progressbar('option', 'max'),
+                        value = $('#progress_bar').progressbar('value'),
+                        p = 0,
+                        text = '';
+
+                    p = Math.floor((value * 100) / max);
+                    text = p + '%';
+
+                    return $('.progress_text').text(text);
+                },
+                complete: function () {
+                    $('.progress_text').text('Done!');
+                    $('#loading-ui').fadeOut(1000);
+                    $('#control-ui').fadeIn();
+                }
+            });
+            $('#loading-ui').fadeIn(800);
+        },
+        updateBar: function (method, option, value) {
+            return $('#progress_bar').progressbar(method, option, value);
+        }
+    };
+}());
+
 $(document).on("deviceready", function () {
 //    var fileSys = window.resolveLocalFileSystemURL();
     deviceReadyDeferred.resolve();
@@ -404,18 +439,20 @@ $.when(deviceReadyDeferred, jqmReadyDeferred).then(init);
 // and I shall hang my head in shame.
 $(document).ready(function () {
     if (typeof cordova === 'undefined') {
-        init();
+//        init();
+        $('#button_download').show();
+
+        $('#button_download').tap(function () {
+            $('#button_download').hide();
+            init();
+        });
     }
 });
 
 function init() {
     console.log('init');
-    $('#button_download').tap(function () {
-        $('#button_download').hide();
-        $('#progressbar').progressbar({
-            value: false
-        }).show();
-        Loader.load();
-    });
+
+    UiHelper.setupLoadingUi();
+    Loader.load();
 }
 
