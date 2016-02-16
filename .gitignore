@@ -45,6 +45,8 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Netbeans project files
 /nbproject/private/
 /www/nbproject/private/
 /www_nb_temp/nbproject/private/
