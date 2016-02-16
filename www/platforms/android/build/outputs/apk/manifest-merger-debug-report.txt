@@ -77,22 +77,42 @@ category#android.intent.category.LAUNCHER
 ADDED from AndroidManifest.xml:11:17
 	android:name
 		ADDED from AndroidManifest.xml:11:27
+activity#com.mbppower.CameraActivity
+ADDED from AndroidManifest.xml:14:9
+	android:screenOrientation
+		ADDED from AndroidManifest.xml:14:62
+	android:theme
+		ADDED from AndroidManifest.xml:14:99
+	android:name
+		ADDED from AndroidManifest.xml:14:19
 uses-sdk
-ADDED from AndroidManifest.xml:15:5
+ADDED from AndroidManifest.xml:16:5
 MERGED from android:CordovaLib:unspecified:debug:25:5
 	android:targetSdkVersion
-		ADDED from AndroidManifest.xml:15:42
+		ADDED from AndroidManifest.xml:16:42
 	android:minSdkVersion
-		ADDED from AndroidManifest.xml:15:15
+		ADDED from AndroidManifest.xml:16:15
 uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
-ADDED from AndroidManifest.xml:16:5
-	android:name
-		ADDED from AndroidManifest.xml:16:22
-uses-permission#android.permission.ACCESS_COARSE_LOCATION
 ADDED from AndroidManifest.xml:17:5
 	android:name
 		ADDED from AndroidManifest.xml:17:22
-uses-permission#android.permission.ACCESS_FINE_LOCATION
+uses-permission#android.permission.ACCESS_COARSE_LOCATION
 ADDED from AndroidManifest.xml:18:5
 	android:name
 		ADDED from AndroidManifest.xml:18:22
+uses-permission#android.permission.ACCESS_FINE_LOCATION
+ADDED from AndroidManifest.xml:19:5
+	android:name
+		ADDED from AndroidManifest.xml:19:22
+uses-feature#android.hardware.camera
+ADDED from AndroidManifest.xml:20:5
+	android:name
+		ADDED from AndroidManifest.xml:20:19
+uses-feature#android.hardware.camera.autofocus
+ADDED from AndroidManifest.xml:21:5
+	android:name
+		ADDED from AndroidManifest.xml:21:19
+uses-permission#android.permission.CAMERA
+ADDED from AndroidManifest.xml:22:5
+	android:name
+		ADDED from AndroidManifest.xml:22:22

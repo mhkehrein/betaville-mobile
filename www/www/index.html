@@ -15,9 +15,10 @@
         <meta http-equiv="Content-Security-Policy"
               content="default-src *.hs-bremen.de 'self' data: gap:;
               style-src 'self' 'unsafe-inline';
-              media-src *;
+              media-src 'self' blob:;
               connect-src http://betaville.hs-bremen.de:8080/betaville-server/
-              http://195.37.176.183:8080/betaville-server/">
+              http://195.37.176.183:8080/betaville-server/;
+              img-src 'self' data: gap: android-webview-video-poster:" >
 
         <link rel="stylesheet" href="css/jquery.mobile-1.4.5.min.css" />
         <link rel="stylesheet" href="css/viewer-mobile.min.css" />
@@ -29,6 +30,9 @@
         <link rel="stylesheet" href="css/custom.css" />
 
         <script src="lib/zipjs/zip.js"></script>
+
+        <!-- Supposed to add support for WebRTC/Media stuff -->
+        <script src="lib/adapter.js"></script>
 
         <!-- Revision r73 -->
         <script src="lib/threejs/three.min.js"></script>
@@ -46,24 +50,31 @@
     </head>
 
     <body>
-        <div data-role="page" id="page">
-            <div id="content" class="ui-body" role="main">
-                <div id="title">
+        <div data-role="page" id="preface">
+            <div role="main" id="preface-main" class="ui-body" >
+                <div id="preface-title">
                     <!-- <img id="logo" src="resources/logo-full.png" width="260" height="46" alt="betaville logo"/> -->
                     <img src="resources/drawable-hdpi/icon.png" alt="betaville_icon"/>
                     <h1>betaville</h1>
                 </div>
-                <h4 id="subtitle">Proposal Viewer</h4>
+                <h4 id="preface-subtitle">Proposal Viewer</h4>
                 <div class="ui-content">
-                    <button type="submit" id="button_download" class="ui-btn" style="display: none">Download project data</button>
-                    <div id="loading-ui" style="display: none">
+                    <div id="loading-ui">
                         <div id="progress_bar" class="ui-progressbar"></div>
                         <p class="progress_text">Loading… </p>
                     </div>
-                    <div id="control-ui" style="display:none">
-                        <button type="submit" id="button_start" class="ui-btn ui-btn-inline">Start</button>
+                    <div id="control-ui" style="display: none;">
+                        <a href="#viewer" id="button_start" class="ui-btn ui-btn-inline">Start Viewer</a>
+                    </div>
+                    <div id="error-ui">
+                        <p class="error_text"></p>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div data-role="page" id="viewer">
+            <div role="main" id="viewer-video">
+                <video id="video">Video stream not available.</video>
             </div>
         </div>
         <script src="cordova.js"></script>

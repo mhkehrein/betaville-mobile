@@ -39,6 +39,10 @@
                         {
                             "xml": "<feature name=\"Whitelist\"><param name=\"android-package\" value=\"org.apache.cordova.whitelist.WhitelistPlugin\" /><param name=\"onload\" value=\"true\" /></feature>",
                             "count": 1
+                        },
+                        {
+                            "xml": "<feature name=\"CameraPreview\"><param name=\"android-package\" value=\"com.mbppower.CameraPreview\" /><param name=\"onload\" value=\"true\" /></feature>",
+                            "count": 1
                         }
                     ]
                 }
@@ -60,6 +64,30 @@
                         },
                         {
                             "xml": "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />",
+                            "count": 1
+                        }
+                    ],
+                    "/manifest": [
+                        {
+                            "xml": "<uses-feature android:name=\"android.hardware.camera\" />",
+                            "count": 1
+                        },
+                        {
+                            "xml": "<uses-feature android:name=\"android.hardware.camera.autofocus\" />",
+                            "count": 1
+                        },
+                        {
+                            "xml": "<uses-permission android:name=\"android.permission.CAMERA\" />",
+                            "count": 1
+                        },
+                        {
+                            "xml": "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" />",
+                            "count": 1
+                        }
+                    ],
+                    "/manifest/application": [
+                        {
+                            "xml": "<activity android:name=\"com.mbppower.CameraActivity\" android:screenOrientation=\"portrait\" android:theme=\"@style/CameraPreviewTheme\" />",
                             "count": 1
                         }
                     ]
@@ -93,6 +121,9 @@
             "PACKAGE_NAME": "de.hs_bremen.betaville"
         },
         "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "com.mbppower.camerapreview": {
             "PACKAGE_NAME": "de.hs_bremen.betaville"
         }
     },
@@ -381,6 +412,14 @@
             "id": "cordova-plugin-whitelist.whitelist",
             "pluginId": "cordova-plugin-whitelist",
             "runs": true
+        },
+        {
+            "file": "plugins/com.mbppower.camerapreview/www/CameraPreview.js",
+            "id": "com.mbppower.camerapreview.CameraPreview",
+            "pluginId": "com.mbppower.camerapreview",
+            "clobbers": [
+                "cordova.plugins.camerapreview"
+            ]
         }
     ],
     "plugin_metadata": {
@@ -392,6 +431,7 @@
         "cordova-plugin-file-transfer": "1.5.1-dev",
         "cordova-plugin-geolocation": "2.1.1-dev",
         "cordova-plugin-network-information": "1.2.1-dev",
-        "cordova-plugin-whitelist": "1.2.1"
+        "cordova-plugin-whitelist": "1.2.1",
+        "com.mbppower.camerapreview": "0.0.8"
     }
 }

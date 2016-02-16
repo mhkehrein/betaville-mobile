@@ -231,10 +231,6 @@ var Loader = (function () {
                 progressValue = 0;
 
 
-//            $('#progressbar').progressbar('option', 'max', urls.length);
-//            $('#progressbar').progressbar('value', 0);
-
-
             /*
              * No need to download a file twice: Resolving the path in localDir to a URL gives us
              * a DirectoryEntry object, which in turn lets us search for existing files within
@@ -250,7 +246,6 @@ var Loader = (function () {
 
                     directoryEntry.getFile(fileNames[index], {create: false},
                         function (file) {
-                            console.log(file.name + ' already exists. Skipping download.');
                             UiHelper.updateBar('value', (progressValue += 1));
                         },
                         function (error) {
@@ -393,32 +388,162 @@ var Utils = (function () {
 }());
 
 var UiHelper = (function () {
+    function setupProgressBar() {
+        $('#progress_bar').progressbar({
+            value: false,
+            change: function () {
+                var
+                    max = $('#progress_bar').progressbar('option', 'max'),
+                    value = $('#progress_bar').progressbar('value'),
+                    p = 0,
+                    text = '';
+
+                p = Math.floor((value * 100) / max);
+                text = p + '%';
+
+                return $('.progress_text').text(text);
+            },
+            complete: function () {
+                $('.progress_text').text('Done!');
+                $('#loading-ui').fadeOut(800, function () {
+                    $('#control-ui').fadeIn(200);
+                });
+            }
+        });
+    }
+
     return {
         setupLoadingUi: function () {
-            $('#progress_bar').progressbar({
-                value: false,
-                change: function () {
-                    var
-                        max = $('#progress_bar').progressbar('option', 'max'),
-                        value = $('#progress_bar').progressbar('value'),
-                        p = 0,
-                        text = '';
+            $('#loading-ui').hide();
+            $('#control-ui').hide();
 
-                    p = Math.floor((value * 100) / max);
-                    text = p + '%';
+            setupProgressBar();
 
-                    return $('.progress_text').text(text);
-                },
-                complete: function () {
-                    $('.progress_text').text('Done!');
-                    $('#loading-ui').fadeOut(1000);
-                    $('#control-ui').fadeIn();
-                }
-            });
             $('#loading-ui').fadeIn(800);
         },
         updateBar: function (method, option, value) {
             return $('#progress_bar').progressbar(method, option, value);
+        },
+        setupEventHandlers: function () {
+
+        }
+    };
+}());
+
+var CamUtils = (function () {
+    var
+        width = 0,
+        height = 0,
+        streaming = false,
+        constraints = {
+            video: true,
+            audio: false
+        };
+
+    function listDevices() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.log("enumerateDevices() not supported.");
+            return;
+        }
+
+//        constraints.video.optional[0] = {
+//            sourceId: device.deviceId
+//        };
+
+// List cameras and microphones.
+        navigator.mediaDevices.enumerateDevices()
+            .then(function (devices) {
+
+                devices.forEach(function (device) {
+                    console.log(device.kind + ": " + device.label +
+                        " id = " + device.deviceId);
+
+                });
+
+            })
+            .catch(function (err) {
+                console.log(err.name + ": " + error.message);
+            });
+    }
+
+    function setupVideoListener() {
+        width = $(window).innerWidth();
+
+        $('#video').on('canplay', function (ev) {
+            console.log('canplay');
+            if (!streaming) {
+                console.log('setting up video');
+                var video = $('#video');
+                height = video.videoHeight / (video.videoWidth / width);
+
+                // Firefox currently has a bug where the height can't be read from
+                // the video, so we will make assumptions if this happens.
+
+                if (isNaN(height)) {
+                    height = width / (4 / 3);
+                }
+
+//                video.setAttribute('width', width);
+//                video.setAttribute('height', height);
+                video.setAttribute('width', $(window).innerWidth());
+                video.setAttribute('height', $(window).innerHeight());
+//                    canvas.setAttribute('width', width);
+//                    canvas.setAttribute('height', height);
+                streaming = true;
+            }
+        }, false);
+    }
+
+    function errorCallback(e) {
+        console.log('Reeeejected!', e);
+    }
+
+    function hasGetUserMedia() {
+        return (navigator.getUserMedia || navigator.webkitGetUserMedia ||
+            navigator.mozGetUserMedia || navigator.msGetUserMedia);
+    }
+
+    function successCallback(stream) {
+        // For some reason, using jQuery selector throws "not a function" error
+        var video = document.getElementById('video');
+
+        if (navigator.mozGetUserMedia) {
+            video.mozSrcObject = stream;
+        } else {
+            var vendorURL = window.URL || window.webkitURL;
+            video.src = vendorURL.createObjectURL(stream);
+        }
+        video.play();
+    }
+
+    return {
+        init: function () {
+            if (hasGetUserMedia()) {
+
+                navigator.getUserMedia = navigator.getUserMedia ||
+                    navigator.webkitGetUserMedia ||
+                    navigator.mozGetUserMedia ||
+                    navigator.msGetUserMedia;
+
+
+                if (navigator.getUserMedia) {
+                    console.log('hasMedia!');
+
+
+                    navigator.getUserMedia(constraints, successCallback, errorCallback);
+
+//                        {video: true}, function (stream) {
+//                        video.src = window.URL.createObjectURL(stream);
+//                    }, errorCallback);
+                } else {
+                    console.log('error preparing stream'); // fallback.
+                }
+
+                setupVideoListener();
+
+            } else {
+                console.log('nope');
+            }
         }
     };
 }());
@@ -440,11 +565,16 @@ $.when(deviceReadyDeferred, jqmReadyDeferred).then(init);
 $(document).ready(function () {
     if (typeof cordova === 'undefined') {
 //        init();
-        $('#button_download').show();
+        console.log('no cordova');
+// TODO: Delete the download button - used for browser testing
+
+        $('#preface-main .ui-content').prepend('<button type="submit" id="button_download" class="ui-btn ui-btn">Download project data</button>');
 
         $('#button_download').tap(function () {
             $('#button_download').hide();
             init();
+            UiHelper.updateBar('option', 'max', 5);
+            UiHelper.updateBar('value', 5);
         });
     }
 });
@@ -453,6 +583,8 @@ function init() {
     console.log('init');
 
     UiHelper.setupLoadingUi();
+    UiHelper.setupEventHandlers();
     Loader.load();
+    CamUtils.init();
 }
 

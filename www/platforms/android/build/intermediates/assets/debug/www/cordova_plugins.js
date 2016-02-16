@@ -283,6 +283,14 @@ module.exports = [
         "id": "cordova-plugin-whitelist.whitelist",
         "pluginId": "cordova-plugin-whitelist",
         "runs": true
+    },
+    {
+        "file": "plugins/com.mbppower.camerapreview/www/CameraPreview.js",
+        "id": "com.mbppower.camerapreview.CameraPreview",
+        "pluginId": "com.mbppower.camerapreview",
+        "clobbers": [
+            "cordova.plugins.camerapreview"
+        ]
     }
 ];
 module.exports.metadata = 
@@ -296,7 +304,8 @@ module.exports.metadata =
     "cordova-plugin-file-transfer": "1.5.1-dev",
     "cordova-plugin-geolocation": "2.1.1-dev",
     "cordova-plugin-network-information": "1.2.1-dev",
-    "cordova-plugin-whitelist": "1.2.1"
+    "cordova-plugin-whitelist": "1.2.1",
+    "com.mbppower.camerapreview": "0.0.8"
 }
 // BOTTOM OF METADATA
 });
