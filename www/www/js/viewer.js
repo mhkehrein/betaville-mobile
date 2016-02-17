@@ -558,6 +558,80 @@ var UiHelper = (function () {
     };
 }());
 
+var Sensors = (function () {
+    var
+        compass,
+        accelerometer;
+
+    function dummyGeo() {
+        console.log('dummyGeo');
+        // onSuccess Callback
+// This method accepts a Position object, which contains the
+// current GPS coordinates
+//
+        var onSuccess = function (position) {
+            console.log('Latitude: ' + position.coords.latitude + '\n' +
+                'Longitude: ' + position.coords.longitude + '\n' +
+                'Altitude: ' + position.coords.altitude + '\n' +
+                'Accuracy: ' + position.coords.accuracy + '\n' +
+                'Altitude Accuracy: ' + position.coords.altitudeAccuracy + '\n' +
+                'Heading: ' + position.coords.heading + '\n' +
+                'Speed: ' + position.coords.speed + '\n' +
+                'Timestamp: ' + position.timestamp + '\n');
+        };
+
+// onError Callback receives a PositionError object
+//
+        function onError(error) {
+            console.log('code: ' + error.code + '\n' +
+                'message: ' + error.message + '\n');
+        }
+
+        navigator.geolocation.getCurrentPosition(onSuccess, onError);
+    }
+
+    function dummyAcc() {
+        console.log('dummyAcc');
+        var limit = 0;
+
+        function onSuccess(acceleration) {
+            console.log('Acceleration X: ' + acceleration.x + '\n' +
+                'Acceleration Y: ' + acceleration.y + '\n' +
+                'Acceleration Z: ' + acceleration.z + '\n' +
+                'Timestamp: ' + acceleration.timestamp + '\n');
+            limit += 1;
+            if (limit >= 20) {
+                navigator.accelerometer.clearWatch(watchID);
+            }
+        }
+
+        function onError() {
+            console.log('onError!');
+        }
+
+        var options = {frequency: 200};
+
+        var watchID = navigator.accelerometer.watchAcceleration(onSuccess, onError, options);
+
+
+
+    }
+
+    return {
+        init: function () {
+            console.log('motion');
+            compass = navigator.compass;
+            accelerometer = navigator.accelerometer;
+
+            dummyGeo();
+            dummyAcc();
+
+        }
+    };
+}());
+
+
+
 var CamUtils = (function () {
     var
         previewConstraints = {},
@@ -622,5 +696,7 @@ function init() {
 
     Loader.init();
     CamUtils.init();
+
+    Sensors.init();
 }
 

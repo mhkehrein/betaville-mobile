@@ -55,13 +55,6 @@
     align-content: center;
 }
 
-#camera-body {
-    background-color: black;
-    width: 95% !important;
-    height: 95% !important;
-    margin: auto;
-}
-
-.bordered {
-    border: #006699 dotted thin;
+.transparent {
+    background-color: transparent;
 }

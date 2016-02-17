@@ -291,6 +291,22 @@ module.exports = [
         "clobbers": [
             "cordova.plugins.camerapreview"
         ]
+    },
+    {
+        "file": "plugins/cordova-plugin-device-motion/www/Acceleration.js",
+        "id": "cordova-plugin-device-motion.Acceleration",
+        "pluginId": "cordova-plugin-device-motion",
+        "clobbers": [
+            "Acceleration"
+        ]
+    },
+    {
+        "file": "plugins/cordova-plugin-device-motion/www/accelerometer.js",
+        "id": "cordova-plugin-device-motion.accelerometer",
+        "pluginId": "cordova-plugin-device-motion",
+        "clobbers": [
+            "navigator.accelerometer"
+        ]
     }
 ];
 module.exports.metadata = 
@@ -305,7 +321,8 @@ module.exports.metadata =
     "cordova-plugin-geolocation": "2.1.1-dev",
     "cordova-plugin-network-information": "1.2.1-dev",
     "cordova-plugin-whitelist": "1.2.1",
-    "com.mbppower.camerapreview": "0.0.8"
+    "com.mbppower.camerapreview": "0.0.8",
+    "cordova-plugin-device-motion": "1.2.0"
 }
 // BOTTOM OF METADATA
 });

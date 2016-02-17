@@ -1,4 +1,4 @@
-/* global zip, cordova, FileError, FileTransferError */
+/* global zip, cordova, FileError, FileTransferError, THREE */
 
 var deviceReadyDeferred = $.Deferred();
 var jqmReadyDeferred = $.Deferred();
@@ -99,6 +99,121 @@ var ViewerData = (function () {
     };
 }());
 
+/**
+ * Contains references to camera, scene and renderer, prepares and builds WebGL elements.
+ * Singleton.
+ */
+var Graphics = (function () {
+    'use strict';
+
+    var
+        scene = new THREE.Scene(),
+        camera,
+        renderer = new THREE.WebGLRenderer(),
+        container,
+        loadedModels = [],
+        objMtlLoader = new THREE.OBJMTLLoader();
+
+    function resetScene() {
+        console.log('Resetting…');
+        resetCamera();
+    }
+
+    function resetCamera() {
+        camera.position.x = 0;
+        camera.position.z = 100;
+        camera.position.y = 15;
+        camera.lookAt(scene.position);
+        camera.updateProjectionMatrix();
+    }
+
+    function render() {
+        if ($('#container').is(':visible')) {
+            requestAnimationFrame(render);
+            renderer.render(scene, camera, null, true);
+        }
+    }
+
+    function loadModels(origin) {
+        var
+            modelsList = ViewerData.getModels();
+
+        $.each(modelsList, function (index, model) {
+            objMtlLoader.load(model.objBlobUrl, model.mtlBlobUrl, function (obj_3d) {
+                obj_3d.position.x = Utils.distanceWestEast(origin, model.centerPoint);
+                // Workaround: Z-position needs to be inverted, reason unknown
+                obj_3d.position.z = -1 * Utils.distanceSouthNorth(origin, model.centerPoint);
+                obj_3d.position.y = 0;
+
+                obj_3d.rotateY(Math.round(model.orientation[1]) * (Math.PI / 180));
+
+                obj_3d.scale.set(model.scale[0], model.scale[1], model.scale[2]);
+
+                scene.add(obj_3d);
+            },
+                function (xmlHttpRequest) {
+                    // empty onProgress
+                },
+                function (error) {
+                    alert('Error while loading model: A file may be corrupt.');
+                    console.warn(error);
+                }
+            );
+        });
+    }
+
+    return {
+        setupScene: function () {
+            var
+                ambient,
+                directionalLight,
+                axisHelper;
+
+            container = $('#container');
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(80, (container.innerWidth() / container.innerHeight()), 1, 1000);
+            resetCamera();
+
+            // Lights
+            ambient = new THREE.AmbientLight(0xffffff);
+            directionalLight = new THREE.DirectionalLight(0xffffe0);
+            directionalLight.position.set(80, 120, 200).normalize();
+            scene.add(ambient);
+            scene.add(directionalLight);
+
+            // Renderer
+            // TODO: Might have to include a transparent clearcolor
+            renderer.setClearColor(0xff0000, 0.0);
+            renderer.setSize(container.innerWidth(), container.innerHeight());
+            container.append(renderer.domElement);
+        },
+        getRenderer: function () {
+            return renderer;
+        },
+        resetScene: function () {
+            resetScene();
+        },
+        adjustCamera: function () {
+            var ratio;
+
+            container = $('#container');
+            ratio = container.innerWidth() / container.innerHeight();
+
+            camera.ratio = ratio;
+            camera.updateProjectionMatrix();
+        },
+        renderScene: function () {
+            render();
+        },
+        setRendererSize: function (width, height) {
+            renderer.setSize(width, height);
+        },
+        load: function (origin) {
+            loadModels(origin);
+        }
+    };
+}());
 
 /**
  * Loads Freezes and Proposals into ViewerData.
@@ -106,7 +221,10 @@ var ViewerData = (function () {
  */
 var Loader = (function () {
     'use strict';
-    var projectsLoadedDeferred = $.Deferred();
+    var
+        projectsLoadedDeferred = $.Deferred(),
+        projectsParsedDeferred = $.Deferred();
+
 
     // Private methods
 
@@ -119,7 +237,6 @@ var Loader = (function () {
             ViewerData.setProjects(projects);
             projectsLoadedDeferred.resolve();
         });
-        return projectsLoadedDeferred;
     }
 
     function loadProposals() {
@@ -158,13 +275,11 @@ var Loader = (function () {
                 }
             });
         });
-        initModelFilesTransfer(urls, fileNames);
+        projectsParsedDeferred.resolve(urls, fileNames);
     }
 
     function initModelFilesTransfer(urls, fileNames) {
         console.log('Downloading model files…');
-
-
 
         var fileSystemErrorHandler = function (fileName, error) {
             var msg = '';
@@ -221,8 +336,8 @@ var Loader = (function () {
         UiHelper.updateBar('option', 'max', urls.length);
         UiHelper.updateBar('value', 0);
 
+        // TODO: Delete clause. May be undefined in a Browser setting.
         if (typeof cordova !== 'undefined') {
-
             var
                 // Initiate plugin
                 fileTransfer = new FileTransfer(),
@@ -308,9 +423,11 @@ var Loader = (function () {
 
     // Public methods
     return {
-        load: function () {
-            var loadedDeferred = loadAllProjects();
-            $.when(loadedDeferred).then(loadProposals);
+        init: function () {
+            loadAllProjects();
+
+            $.when(projectsLoadedDeferred).then(loadProposals);
+            $.when(projectsParsedDeferred).then(initModelFilesTransfer);
 
             // get project ids
             // get proposals from ids
@@ -412,145 +529,63 @@ var UiHelper = (function () {
         });
     }
 
+    function setupLoadingUi() {
+        setupProgressBar();
+
+        $('#loading-ui').fadeIn(800);
+    }
+
+    function setupEventHandlers() {
+        $(":mobile-pagecontainer").on("pagecontainershow", function (event, ui) {
+            if (ui.toPage.is($('#viewer'))) {
+                CamUtils.startCamera();
+            } else {
+                CamUtils.stopCamera();
+            }
+        });
+    }
+
     return {
-        setupLoadingUi: function () {
-            $('#loading-ui').hide();
-            $('#control-ui').hide();
-
-            setupProgressBar();
-
-            $('#loading-ui').fadeIn(800);
+        init: function () {
+            setupLoadingUi();
+            setupEventHandlers();
+            Graphics.setupScene();
         },
         updateBar: function (method, option, value) {
             return $('#progress_bar').progressbar(method, option, value);
-        },
-        setupEventHandlers: function () {
-
         }
+
     };
 }());
 
 var CamUtils = (function () {
     var
-        width = 0,
-        height = 0,
-        streaming = false,
-        constraints = {
-            video: true,
-            audio: false
-        };
-
-    function listDevices() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-            console.log("enumerateDevices() not supported.");
-            return;
-        }
-
-//        constraints.video.optional[0] = {
-//            sourceId: device.deviceId
-//        };
-
-// List cameras and microphones.
-        navigator.mediaDevices.enumerateDevices()
-            .then(function (devices) {
-
-                devices.forEach(function (device) {
-                    console.log(device.kind + ": " + device.label +
-                        " id = " + device.deviceId);
-
-                });
-
-            })
-            .catch(function (err) {
-                console.log(err.name + ": " + error.message);
-            });
-    }
-
-    function setupVideoListener() {
-        width = $(window).innerWidth();
-
-        $('#video').on('canplay', function (ev) {
-            console.log('canplay');
-            if (!streaming) {
-                console.log('setting up video');
-                var video = $('#video');
-                height = video.videoHeight / (video.videoWidth / width);
-
-                // Firefox currently has a bug where the height can't be read from
-                // the video, so we will make assumptions if this happens.
-
-                if (isNaN(height)) {
-                    height = width / (4 / 3);
-                }
-
-//                video.setAttribute('width', width);
-//                video.setAttribute('height', height);
-                video.setAttribute('width', $(window).innerWidth());
-                video.setAttribute('height', $(window).innerHeight());
-//                    canvas.setAttribute('width', width);
-//                    canvas.setAttribute('height', height);
-                streaming = true;
-            }
-        }, false);
-    }
-
-    function errorCallback(e) {
-        console.log('Reeeejected!', e);
-    }
-
-    function hasGetUserMedia() {
-        return (navigator.getUserMedia || navigator.webkitGetUserMedia ||
-            navigator.mozGetUserMedia || navigator.msGetUserMedia);
-    }
-
-    function successCallback(stream) {
-        // For some reason, using jQuery selector throws "not a function" error
-        var video = document.getElementById('video');
-
-        if (navigator.mozGetUserMedia) {
-            video.mozSrcObject = stream;
-        } else {
-            var vendorURL = window.URL || window.webkitURL;
-            video.src = vendorURL.createObjectURL(stream);
-        }
-        video.play();
-        listDevices();
-    }
+        previewConstraints = {},
+        cameraDirection = 'back',
+        previewTapEnabled = false,
+        previewDragEnabled = false,
+        previewBehindWebView = true;
 
     return {
         init: function () {
-            if (hasGetUserMedia()) {
-
-                navigator.getUserMedia = navigator.getUserMedia ||
-                    navigator.webkitGetUserMedia ||
-                    navigator.mozGetUserMedia ||
-                    navigator.msGetUserMedia;
-
-
-                if (navigator.getUserMedia) {
-                    console.log('hasMedia!');
-
-
-                    navigator.getUserMedia(constraints, successCallback, errorCallback);
-
-//                        {video: true}, function (stream) {
-//                        video.src = window.URL.createObjectURL(stream);
-//                    }, errorCallback);
-                } else {
-                    console.log('error streaming'); // fallback.
-                }
-
-                setupVideoListener();
-
-            } else {
-                console.log('nope');
-            }
+            previewConstraints = {
+                x: $('#viewer').position().left,
+                y: $('#viewer').position().top,
+                width: $('#viewer').width(),
+                height: $('#viewer').height()
+            };
+        },
+        startCamera: function () {
+            cordova.plugins.camerapreview.startCamera(previewConstraints, cameraDirection,
+                previewTapEnabled, previewDragEnabled, previewBehindWebView);
+        },
+        stopCamera: function () {
+            cordova.plugins.camerapreview.stopCamera();
         }
     };
 }());
 
 $(document).on("deviceready", function () {
-//    var fileSys = window.resolveLocalFileSystemURL();
     deviceReadyDeferred.resolve();
 });
 
@@ -583,9 +618,9 @@ $(document).ready(function () {
 function init() {
     console.log('init');
 
-    UiHelper.setupLoadingUi();
-    UiHelper.setupEventHandlers();
-    Loader.load();
+    UiHelper.init();
+
+    Loader.init();
     CamUtils.init();
 }
 

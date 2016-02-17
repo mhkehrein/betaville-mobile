@@ -12,11 +12,11 @@
 
     <content src="index.html"/>
 
-    <icon src="www/resources/drawable-ldpi/icon.png" density="ldpi" />
-    <icon src="www/resources/drawable-mdpi/icon.png" density="mdpi" />
-    <icon src="www/resources/drawable-hdpi/icon.png" density="hdpi" />
+    <icon density="ldpi" src="www/resources/drawable-ldpi/icon.png"/>
+    <icon density="mdpi" src="www/resources/drawable-mdpi/icon.png"/>
+    <icon density="hdpi" src="www/resources/drawable-hdpi/icon.png"/>
 
-    <plugin name="cordova-plugin-whitelist" spec="1" />
+    <plugin name="cordova-plugin-whitelist" spec="1"/>
 
     <access origin="http://betaville.hs-bremen.de:8080"/>
     <allow-navigation href="http://betaville.hs-bremen.de:8080"/>
@@ -28,14 +28,14 @@
     <allow-intent href="http://195.37.176.183:8080"/>
 
     <!-- Multiplatform preferences: -->
-    <preference name="Orientation" value="sensorLandscape" />
-    <preference name="Fullscreen" value="true" />
+    <preference name="Orientation" value="sensorLandscape"/>
+    <preference name="Fullscreen" value="true"/>
 
     <platform name="android">
         <allow-intent href="market:*"/>
         <preference name="KeepRunning" value="false"/>
         <preference name="LoadingDialog" value="Betaville Mobile Viewer, Loading…"/>
-        <preference name="AndroidPersistentFileLocation" value="Internal" />
+        <preference name="AndroidPersistentFileLocation" value="Internal"/>
     </platform>
     <platform name="ios">
         <allow-intent href="itms:*"/>

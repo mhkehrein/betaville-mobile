@@ -36,6 +36,9 @@
         },
         "com.mbppower.camerapreview": {
             "PACKAGE_NAME": "de.hs_bremen.betaville"
+        },
+        "cordova-plugin-device-motion": {
+            "PACKAGE_NAME": "de.hs_bremen.betaville"
         }
     },
     "dependent_plugins": {}
