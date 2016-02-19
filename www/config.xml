@@ -28,7 +28,7 @@
     <allow-intent href="http://195.37.176.183:8080"/>
 
     <!-- Multiplatform preferences: -->
-    <preference name="Orientation" value="sensorLandscape"/>
+    <preference name="Orientation" value="landscape"/>
     <preference name="Fullscreen" value="true"/>
 
     <platform name="android">

@@ -58,3 +58,10 @@
 .transparent {
     background-color: transparent;
 }
+
+.error_text {
+    background-color: lightgray;
+    text-align: center;
+    color: black;
+    size: 0.8em;
+}
