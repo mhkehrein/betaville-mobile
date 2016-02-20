@@ -32,7 +32,8 @@ var UiHelper = (function () {
     function setupEventHandlers() {
         $(":mobile-pagecontainer").on("pagecontainershow", function (event, ui) {
             if (ui.toPage.is($('#viewer'))) {
-                console.log('#viewer');
+
+                Graphics.init();
 
                 var container = $('#container');
                 container.css({
@@ -40,11 +41,11 @@ var UiHelper = (function () {
                     'height': $('#viewer').innerHeight()
                 });
 
-                Graphics.setupScene();
-                var r = Graphics.getRenderer().domElement;
-                $(r).css({
-                    'background-color': 'transparent'
-                });
+
+                // var r = Graphics.getRenderer().domElement;
+                // $(r).css({
+                //     'background-color': 'transparent'
+                // });
 
                 $(window).on("navigate", function (event, data) {
                     var direction = data.state.direction;
@@ -58,8 +59,11 @@ var UiHelper = (function () {
 
                 CamUtils.startCamera();
 
-                $.when(Sensors.gyroNormLoadedDeferred)
+                $.when(Sensors.gyroNormLoadedDeferred, Graphics.scenePreparedDeferred)
                     .done(function () {
+                        var r = Graphics.getRenderer();
+                        r.setSize(container.width(), container.height());
+
                         Sensors.start();
                         Graphics.renderScene();
                     });

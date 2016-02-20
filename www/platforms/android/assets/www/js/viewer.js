@@ -141,6 +141,8 @@ function init() {
     CamUtils.init();
 
     Sensors.init();
+
+    Graphics.init();
 }
 
 

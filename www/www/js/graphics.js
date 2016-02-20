@@ -15,9 +15,13 @@ var Graphics = (function () {
         }),
         container,
         axisHelper,
-        loadedModels = [],
+        camHelper,
+        ambientLight,
+        directionalLight,
+    loadedModels = [],
         objMtlLoader = new THREE.OBJMTLLoader(),
-        cameraEuler = new THREE.Euler(0, 0, 0, 'XYZ');
+        cameraEuler = new THREE.Euler(0, 0, 0, 'XYZ'),
+        scenePreparedDeferred = $.Deferred();
 
     function resetScene() {
         console.log('Resetting…');
@@ -25,9 +29,9 @@ var Graphics = (function () {
     }
 
     function resetCamera() {
-        camera.position.x = 10;
-        camera.position.z = -20;
-        camera.position.y = 50;
+        camera.position.x = 5;
+        camera.position.y = 15;
+        camera.position.z = 100;
         camera.lookAt(scene.position);
 
         camera.updateProjectionMatrix();
@@ -35,6 +39,7 @@ var Graphics = (function () {
 
     function render() {
         if ($('#container').is(':visible')) {
+
             setCameraPosition();
             requestAnimationFrame(render);
             renderer.render(scene, camera, null, true);
@@ -73,6 +78,7 @@ var Graphics = (function () {
         var
             orientation = Sensors.getOrientation(),
             location = Sensors.getLocation(),
+            alphaAdjusted,
             yaw,
             pitch,
             roll;
@@ -81,122 +87,84 @@ var Graphics = (function () {
             return;
         }
 
+
+
         // camera.position.x = location.coords.latitude;
         // camera.position.z = location.coords.longitude;
 
-        /*
-         * If phone lies on a flat surface, screen up, top pointing away:
-         *
-         *              z
-         *            |
-         *      y  \  |
-         *          \ |
-         *           \|______
-         *                  x
-         *
-         * Angles are described as Euler angles - simplified:
-         * yaw/alpha angle: Rotation around z-axis = compass direction
-         * pitch/beta angle: Rotation around x-axis = front-back tilt
-         * roll/gamma angle: Rotation around y-axis = left-right tilt
-         *
-         *  gamma x alpha
-         *
-         */
+        var alpha = orientation.do.alpha;
+        var beta = orientation.do.beta;
+        var gamma = orientation.do.gamma;
 
-        pitch = THREE.Math.degToRad(orientation.do.beta); // around x-axis
-        roll = THREE.Math.degToRad(orientation.do.gamma); // around y-axis
-        yaw = THREE.Math.degToRad(orientation.do.alpha); // around z-axis
+        //      angles as radians
+        pitch = 0 //orientation.pitch; // beta, around x-axis, as rad
+        roll = orientation.roll; // gamma, around y-axis
+        yaw = orientation.yaw; // alpha, around z-axis
 
-        console.log('degree rotation: ' + orientation.do.beta + ', ' + orientation.do.gamma + ', ' + orientation.do.alpha);
+        $('#alpha p').replaceWith('<p>' + Math.floor(alpha) + '</p>');
+        $('#beta p').replaceWith('<p>' + Math.floor(beta) + '</p>');
+        $('#gamma p').replaceWith('<p>' + Math.floor(gamma) + '</p>');
+        $('#grav-y p').replaceWith('<p>' + Math.floor(orientation.dm.gy) + '</p>');
 
-        // TODO: delete
-        // $('#').html('<p>' + + '</p>');
-        $('#alpha p').replaceWith('<p>' + Math.floor(orientation.do.alpha) + '</p>');
-        $('#beta p').replaceWith('<p>' + Math.floor(orientation.do.beta) + '</p>');
-        $('#gamma p').replaceWith('<p>' + Math.floor(orientation.do.gamma) + '</p>');
+        cameraEuler.set(pitch, roll, yaw, 'XZY');
+        // camera.setRotationFromEuler(cameraEuler);
 
-        cameraEuler.set(pitch, roll, yaw, 'XYZ');
-        // camera.rotation.copy(cameraEuler);
+        // TODO: Delete
+        var dir = camera.getWorldDirection();
 
-        console.log('camera rotation: ' + camera.rotation.x + ', ' + camera.rotation.y + ', ' + camera.rotation.z + '\n' +
-            'camera position: ' + camera.position.x + ', ' + camera.position.y + ', ' + camera.position.z);
+        // console.log('camera rotation: ' + camera.rotation.x + ', ' + camera.rotation.y + ', ' + camera.rotation.z + '\n' +
+        // 'camera position: ' + camera.position.x + ', ' + camera.position.y + ', ' + camera.position.z);
+        // axisHelper.position.x = dir.x;
+        // axisHelper.position.y = dir.y;
+
+        console.log('cam dir');
+        console.log(dir.x * -100 + ', ' + dir.y * -100 + ', ' + dir.z * -100);
+
+        console.log('cam pos');
+        console.log(camera.position.x + ', ' + camera.position.y + ', ' + camera.position.z);
+        console.log('axis');
+        console.log(axisHelper.position.x + ', ' + axisHelper.position.y + ', ' + axisHelper.position.z);
 
         camera.updateProjectionMatrix();
-
     }
 
     return {
-        /**
-         * given: phone on flat surface, screen up
-         * alpha: around z-axis/yaw; 0(north)-359 deg, increments counter-clockwise
-         * beta: x-axis/pitch; increments by tilting screen towards you
-         *  --> 90° = screen towards you,
-         *  --> -90° = screen away
-         *  --> 180° = screen down;
-         * gamma: y-axis/roll; increments clockwise till 90°
-         * @param {Object} data Obtained through gyronorm.js object
-         */
-        setCamera: function (data) {
-            var matrix = camera.projectionMatrix;
-
-            /*
-             * degree * (180 / Math.PI)
-             *
-             */
-
-            var yaw = Utils.asRad(data.do.alpha);
-            var pitch = Utils.asRad(data.do.beta);
-            var roll = Utils.asRad(data.do.gamma);
-
-            matrix.makeRotationX(); // beta
-            matrix.makeRotationY(); // gamma
-            matrix.makeRotationZ(); // alpha
-
-            console.log('data:' + '\n' +
-                data.do.alpha + '\n' + //
-                data.do.beta + '\n' + // x-axis ff-
-                data.do.gamma); // y c+
-
-        },
-        setCameraPosition: function (position) {
-            cameraPosititon = position;
-        },
-        setupScene: function () {
-            var
-                ambient,
-                directionalLight;
-
+        init: function () {
             console.log('setupScene');
 
             container = $('#container');
 
+            console.log(container.innerWidth() + ' ' + container.innerHeight());
             // Camera
             camera = new THREE.PerspectiveCamera(80, (container.innerWidth() /
-                container.innerHeight()), 1, 1000);
+                container.innerHeight()), 0.1, 10000);
             resetCamera();
 
 
             // Lights
-            ambient = new THREE.AmbientLight(0xffffff);
+            ambientLight = new THREE.AmbientLight(0xffffff);
             directionalLight = new THREE.DirectionalLight(0xffffe0);
             directionalLight.position.set(80, 120, 200)
                 .normalize();
-            scene.add(ambient);
+            scene.add(ambientLight);
             scene.add(directionalLight);
 
             // Helper
-            axisHelper = new THREE.AxisHelper(200);
+            axisHelper = new THREE.AxisHelper(2000);
             scene.add(axisHelper);
+
+            // camera.lookAt(axisHelper.position);
 
             // Renderer
             // TODO: Might have to include a transparent clearcolor
-            renderer.setClearColor('#000000', 0);
-            renderer.setSize(container.innerWidth(), container.innerHeight());
+            renderer.setClearColor('#000000', 0.5);
+            // renderer.setSize(container.innerWidth(), container.innerHeight());
             // renderer.domElement = container;
 
             console.log(renderer);
 
             container.html(renderer.domElement);
+            scenePreparedDeferred.resolve();
         },
         getRenderer: function () {
             return renderer;
@@ -221,6 +189,9 @@ var Graphics = (function () {
         },
         load: function (origin) {
             loadModels(origin);
+        },
+        scenePreparedDeferred: function () {
+            return scenePreparedDeferred;
         }
     };
 }());

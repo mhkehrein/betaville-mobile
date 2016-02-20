@@ -17,7 +17,8 @@ var Graphics = (function () {
         axisHelper,
         loadedModels = [],
         objMtlLoader = new THREE.OBJMTLLoader(),
-        cameraEuler = new THREE.Euler(0, 0, 0, 'XYZ');
+        cameraEuler = new THREE.Euler(0, 0, 0, 'XYZ'),
+        scenePreparedDeferred = $.Deferred();
 
     function resetScene() {
         console.log('Resetting…');
@@ -73,6 +74,7 @@ var Graphics = (function () {
         var
             orientation = Sensors.getOrientation(),
             location = Sensors.getLocation(),
+            alphaAdjusted,
             yaw,
             pitch,
             roll;
@@ -81,45 +83,40 @@ var Graphics = (function () {
             return;
         }
 
+
+
         // camera.position.x = location.coords.latitude;
         // camera.position.z = location.coords.longitude;
 
-        /*
-         * If phone lies on a flat surface, screen up, top pointing away:
-         *
-         *              z
-         *            |
-         *      y  \  |
-         *          \ |
-         *           \|______
-         *                  x
-         *
-         * Angles are described as Euler angles - simplified:
-         * yaw/alpha angle: Rotation around z-axis = compass direction
-         * pitch/beta angle: Rotation around x-axis = front-back tilt
-         * roll/gamma angle: Rotation around y-axis = left-right tilt
-         *
-         *  gamma x alpha
-         *
-         */
+        var alpha = orientation.do.alpha;
+        var beta = orientation.do.beta;
+        var gamma = orientation.do.gamma;
 
-        pitch = THREE.Math.degToRad(orientation.do.beta); // around x-axis
-        roll = THREE.Math.degToRad(orientation.do.gamma); // around y-axis
-        yaw = THREE.Math.degToRad(orientation.do.alpha); // around z-axis
+        //      angles as radians
+        pitch = 0 //orientation.pitch; // beta, around x-axis, as rad
+        roll = orientation.roll; // gamma, around y-axis
+        yaw = orientation.yaw; // alpha, around z-axis
 
-        console.log('degree rotation: ' + orientation.do.beta + ', ' + orientation.do.gamma + ', ' + orientation.do.alpha);
+        $('#alpha p').replaceWith('<p>' + Math.floor(alpha) + '</p>');
+        $('#beta p').replaceWith('<p>' + Math.floor(beta) + '</p>');
+        $('#gamma p').replaceWith('<p>' + Math.floor(gamma) + '</p>');
+        $('#grav-y p').replaceWith('<p>' + Math.floor(orientation.dm.gy) + '</p>');
 
-        // TODO: delete
-        // $('#').html('<p>' + + '</p>');
-        $('#alpha p').replaceWith('<p>' + Math.floor(orientation.do.alpha) + '</p>');
-        $('#beta p').replaceWith('<p>' + Math.floor(orientation.do.beta) + '</p>');
-        $('#gamma p').replaceWith('<p>' + Math.floor(orientation.do.gamma) + '</p>');
+        cameraEuler.set(pitch, roll, yaw, 'XZY');
+        // camera.setRotationFromEuler(cameraEuler);
 
-        cameraEuler.set(pitch, roll, yaw, 'XYZ');
-        // camera.rotation.copy(cameraEuler);
+        // TODO: Delete
+        var dir = camera.getWorldDirection();
 
-        console.log('camera rotation: ' + camera.rotation.x + ', ' + camera.rotation.y + ', ' + camera.rotation.z + '\n' +
-            'camera position: ' + camera.position.x + ', ' + camera.position.y + ', ' + camera.position.z);
+        // console.log('camera rotation: ' + camera.rotation.x + ', ' + camera.rotation.y + ', ' + camera.rotation.z + '\n' +
+        // 'camera position: ' + camera.position.x + ', ' + camera.position.y + ', ' + camera.position.z);
+        // axisHelper.position.x = dir.x;
+        // axisHelper.position.y = dir.y;
+
+        console.log('cam');
+        console.log(dir.x + ', ' + dir.y + ', ' + dir.z);
+        console.log('axis');
+        console.log(axisHelper.position.x + ', ' + axisHelper.position.y + ', ' + axisHelper.position.z);
 
         camera.updateProjectionMatrix();
 
@@ -161,7 +158,7 @@ var Graphics = (function () {
         setCameraPosition: function (position) {
             cameraPosititon = position;
         },
-        setupScene: function () {
+        init: function () {
             var
                 ambient,
                 directionalLight;
@@ -185,7 +182,9 @@ var Graphics = (function () {
             scene.add(directionalLight);
 
             // Helper
-            axisHelper = new THREE.AxisHelper(200);
+            axisHelper = new THREE.AxisHelper(20000);
+            axisHelper.position.z = -50;
+
             scene.add(axisHelper);
 
             // Renderer
@@ -197,6 +196,7 @@ var Graphics = (function () {
             console.log(renderer);
 
             container.html(renderer.domElement);
+            scenePreparedDeferred.resolve();
         },
         getRenderer: function () {
             return renderer;
@@ -221,6 +221,9 @@ var Graphics = (function () {
         },
         load: function (origin) {
             loadModels(origin);
+        },
+        scenePreparedDeferred: function () {
+            return scenePreparedDeferred;
         }
     };
 }());
